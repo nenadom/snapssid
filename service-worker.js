@@ -14,7 +14,7 @@ chrome.action.onClicked.addListener(async (tab) => {
       activeTabUrl.protocol +
       "//" +
       activeTabUrl.hostname +
-      (url.port ? ":" + activeTabUrl.port : "") +
+      (activeTabUrl.port ? ":" + activeTabUrl.port : "") +
       "/";
 
     chrome.cookies.get({ url: cookieUrl, name: COOKIE_NAME }, (cookie) => {
