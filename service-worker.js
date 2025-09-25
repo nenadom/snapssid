@@ -2,23 +2,28 @@ const ERR_PREFIX = "[SnapSSID]";
 const COOKIE_NAME = "PHPSESSID";
 const LOCALHOST_TARGET_URL = "http://localhost:3000";
 
-chrome.action.onClicked.addListener(async (tab) => {
+browser.browserAction.onClicked.addListener(async (tab) => {
   if (!tab || !tab.url) {
     console.log(ERR_PREFIX, "no active tab URL found");
     return;
   }
 
   try {
-    const activeTabUrl = new URL(tab.url);
-    const cookieUrl =
-      activeTabUrl.protocol +
-      "//" +
-      activeTabUrl.hostname +
-      (activeTabUrl.port ? ":" + activeTabUrl.port : "") +
-      "/";
+    // const activeTabUrl = new URL(tab.url);
+    const cookieUrl = tab.url; // use full URL so cookies with path like /admin match
 
-    const activeOriginPattern = `${activeTabUrl.protocol}//${activeTabUrl.host}/*`;
-    const localhostOriginPattern = `http://localhost:3000/*`;
+    const getDetails = {
+      url: cookieUrl,
+      name: COOKIE_NAME,
+    };
+    if (tab.cookieStoreId) {
+      getDetails.storeId = tab.cookieStoreId;
+    }
+    const cookie = await browser.cookies.get(getDetails);
+    if (!cookie) {
+      console.log(ERR_PREFIX, COOKIE_NAME, "not found on this origin");
+      return;
+    }
 
     const ensureOriginsGranted = (origins, callback) => {
       chrome.permissions.contains({ origins }, (has) => {
@@ -58,6 +63,9 @@ chrome.action.onClicked.addListener(async (tab) => {
         }
       });
     };
+    if (tab.cookieStoreId) {
+      newCookie.storeId = tab.cookieStoreId;
+    }
 
     // Ensure we have access to both the active origin (to read) and localhost (to write)
     ensureOriginsGranted(
